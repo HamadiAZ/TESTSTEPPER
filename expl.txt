@@ -1,0 +1,81 @@
+
+https://hackaday.io/project/183279-accelstepper-the-missing-manual/details
+
+any time setSpeed() is called, it calculates a new stepInterval based on the 
+specified speed. The value will be limited by the value of maxSpeed. 
+As mentioned above, this value will only be used if runSpeed() is used;
+ it will be ignored and overwritten if run() is used
+ 
+ 
+ Typically, setMaxSpeed() is called followed by either setSpeed() or moveTo().
+ 
+ 
+ The other functions that will cause motion include runSpeedToPosition(), 
+ which checks to see if the target position has been reached and calls runSpeed() 
+ if it hasn't. Another is runToPosition(), which simply calls run() until the 
+ target position is reached - that is, it blocks until position is reached.
+ Finally, runToNewPosition() allows a new position to be specified, 
+ then calls moveTo() to set that as the target, and calls runToPosition()
+ to do the move.
+ 
+ 
+ Let's summarize how AccelStepper works. When an AccelStepper object is created,
+ maxSpeed and acceleration are set to 1.0. currentPosition and targetPosition 
+ are set to 0, and speed is set to 0.0. In the simplest case to begin motion, 
+ setSpeed() must be called to set a speed for subsequent calls to runSpeed(). 
+ Using the default values, speed will be limited to 1.0 steps per second. 
+ Now call runSpeed() as often as possible - usually in the main loop.
+ The motor will run continually at a constant speed. SetSpeed() may 
+ be called with a negative number to cause motion in the opposite direction.
+ (setMaxSpeed() does not have to be called, but speed will be limited to 1
+ step per second or less.)
+ 
+ 
+ 
+ Alternatively, moveTo() may be called to specify a new target position.
+ Calling setSpeed() is unnecessary, since speed will be calculated by 
+ computeNewSpeed() which is called by moveTo(). Calling run() instead of runSpeed()
+ will cause the motor to accelerate to maxSpeed and run toward the targetPosition. 
+ As the targetPosition is approached, the motor will be slowed and will stop when
+ the target position is reached. Further calls to run() will cause no motion until
+ a new moveTo() or move() call is made. If more rapid acceleration and deceleration 
+ are desired, then setAcceleration() should be used. Each time run() is called, 
+ the value of speed is calculated by computeNewSpeed() (an internal routine that
+ should not be called directly). Any value set by setSpeed will be ignored.
+ These functions will be described in full detail below.
+ 
+ 
+ Positive and negative values for direction are arbitrary depending on how the
+ driver is wired. The key point is that they move the motor in two opposite 
+ directions. Positive and negative values for speed don't matter, speed is 
+ stored as an absolute value.
+ 
+ ************ constant speed
+  If you are trying to use constant speed movements, you should call setSpeed() after calling moveTo().
+ If runSpeed() is being used, then setSpeed() must be called after setMaxSpeed().
+ setSpeed((float) speed)  
+  Argument: speed in steps per second as a floating point value.
+  May be positive or negative.
+Sets the desired constant speed for use with runSpeed().
+ ************
+ 
+ 
+ 
+ If moveTo() is called while the motor is moving,the target position is changed 
+ immediately and the acceleration algorithm is used to calculate the new speed.
+ If the motor is running at a high speed in a particular direction and the new 
+ target position is in the opposite direction, the motor will continue to run 
+ in the same direction, decelerate to stop, then accelerate in the new direction 
+ until it approaches the new target and slows to a stop.
+ 
+ 
+ 
+ setCurrentPosition((long) position) !!!!
+ !!Warning: Do not call this function while a move is in process! The values of 
+ current position and target position will be changed immediately and speed will
+ be immediately set to 0. This will force the motor to try to stop instantly
+ and will most likely result in missed steps and possible damage to your system.
+ Be sure the stepper has come to a stop before calling setCurrentPostion().
+ 
+ 
+ 
